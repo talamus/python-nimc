@@ -43,7 +43,7 @@ class ScreenFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
 
-        msg = f"{BOLD}{record.name:<16} {COLOR.get(record.levelname, '')}{record.levelname:>9}{RESET} {record.getMessage()}"
+        msg = f"{BOLD}{record.name:<24} {COLOR.get(record.levelname, '')}{record.levelname:>8}{RESET} {record.getMessage()}"
         if record.exc_info:
             msg += "\n" + self.formatException(record.exc_info)
         return msg
