@@ -5,8 +5,9 @@ export HCLOUD_TOKEN="{{ hcloud_token }}"
 export SERVER_NAME="{{ server_name }}"
 export VOLUME_NAME="{{ volume_name }}"
 
-HCLOUD="/persistent/bin/hcloud"
 INACTIVITY_FILE="/run/nimc/server.inactive"
+
+HCLOUD="/persistent/bin/hcloud"
 
 # Make sure that `hcloud` is available before proceeding
 if [ ! -x "$HCLOUD" ]; then
