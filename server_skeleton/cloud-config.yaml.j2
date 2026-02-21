@@ -64,8 +64,8 @@ runcmd:
   - systemctl start nimc.service
   {%- endif %}
 
-  # Set up cron job to check server inactivity every 15 minutes (nimc user)
-  - echo "*/15 * * * * /persistent/bin/check_inactivity >> /tmp/nimc_inactivity.log 2>&1" | crontab -u {{ service_username }} -
+  # Set up cron job to check server inactivity every 15 minutes (service user)
+  - echo "*/15 * * * * /persistent/bin/check_inactivity >> /tmp/check_inactivity.log 2>&1" | crontab -u {{ service_username }} -
 
   # Set up cron job for self-destruct approx 5 minutes after (root user)
   - echo "20,35,50,5 * * * * /root/bin/self_destruct >> /var/log/self_destruct.log 2>&1" | crontab -u root -

@@ -112,12 +112,12 @@ are maintaining the following files:
 ```
 /run/nimc/server.pid       — PID file that exists when server is running
 /run/nimc/server.inactive  — This timestamp file will be created when the server
-                           — has been inactive for 15 minutes.
+                             has been inactive for 15 minutes.
 ```
 
 Logs will be written into:
 
 ```
-/tmp/nimc_inactivity.log    — Written by `check_inactivity` run by service user cronjob
+/tmp/check_inactivity.log   — Written by `check_inactivity` run by service user cronjob
 /var/log/self_destruct.log  — Written by `self_destruct` run by root user cronjob
 ```
