@@ -39,4 +39,4 @@ if __name__ == '__main__':
         print(f"  {BOLD}{key}:{RESET} {value}")
 
     print(f"\n{BOLD}{GREEN}Starting development server...{RESET}")
-    uvicorn.run("web.app:app", **CONFIG)
+    uvicorn.run("nimc.web.app:app", **CONFIG)

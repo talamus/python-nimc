@@ -6,4 +6,4 @@ WORKER_CLASS="uvicorn.workers.UvicornWorker"
 WORKERS=2
 
 echo -e "\e[1;32mRunning the web app with $WORKERS workers using Gunicorn and worker class: $WORKER_CLASS\e[0m"
-uv run gunicorn web.app:app -w $WORKERS -k "$WORKER_CLASS"
+uv run gunicorn nimc.web.app:app -w $WORKERS -k "$WORKER_CLASS"
