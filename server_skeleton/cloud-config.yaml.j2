@@ -23,7 +23,7 @@ write_files:
     permissions: '0644'
     content: {{ files_sshd_config }}
 
-  - path: /root/bin/self-destruct
+  - path: /root/bin/self_destruct
     owner: root:root
     permissions: '0755'
     content: {{ files_self_destruct }}
@@ -54,8 +54,8 @@ runcmd:
   - chown -R {{ service_username }}:{{ service_username }} /run/nimc
 
   # Add persistent volume to /etc/fstab and mount it
-  - echo '/dev/disk/by-id/scsi-0HC_Volume_{{ volume_id }} /persistence ext4 discard,nofail,defaults 0 0' >> /etc/fstab
-  - mount /persistence
+  - echo '/dev/disk/by-id/scsi-0HC_Volume_{{ volume_id }} /persistent ext4 discard,nofail,defaults 0 0' >> /etc/fstab
+  - mount /persistent
 
   # Reload systemd, enable and start nimc service
   - systemctl daemon-reload
@@ -65,7 +65,7 @@ runcmd:
   {%- endif %}
 
   # Set up cron job to check server inactivity every 15 minutes (nimc user)
-  - echo "*/15 * * * * /persistence/bin/check_inactivity >> /tmp/nimc_inactivity.log 2>&1" | crontab -u {{ service_username }} -
+  - echo "*/15 * * * * /persistent/bin/check_inactivity >> /tmp/nimc_inactivity.log 2>&1" | crontab -u {{ service_username }} -
 
   # Set up cron job for self-destruct approx 5 minutes after (root user)
   - echo "20,35,50,5 * * * * /root/bin/self_destruct >> /var/log/self_destruct.log 2>&1" | crontab -u root -

@@ -119,5 +119,5 @@ Logs will be written into:
 
 ```
 /tmp/nimc_inactivity.log    — Written by `check_inactivity` run by service user cronjob
-/var/log/self_destruct.log  — Written by `self_desctuct` run by root user cronjob
+/var/log/self_destruct.log  — Written by `self_destruct` run by root user cronjob
 ```

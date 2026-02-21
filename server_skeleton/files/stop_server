@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-cd "$(dirname "$0")"
-set -e
+cd /persistent/server
+set -eo pipefail
 
-PID_FILE="/run/minecraft/hasturian.pid"
-SERVER_INACTIVE_FILE="/run/minecraft/hasturian.inactive"
+PID_FILE="/run/nimc/server.pid"
+INACTIVITY_FILE="/run/nimc/server.inactive"
 TIMEOUT=30
 
-# Make sure that `rcon` and `java` are installed
-java -version >/dev/null 2>&1
-rcon -v >/dev/null
+RCON="/persistent/bin/rcon"
+
+# Make sure that `rcon` is installed
+if [ ! -x "$RCON" ]; then
+  echo "rcon not found at $RCON! Aborting."
+  exit 1
+fi
 
 # Read RCON configuration from `server.properties`
 if [ ! -f "server.properties" ]; then
@@ -20,7 +24,7 @@ RCON_PORT="$(grep '^rcon.port=' server.properties | cut -d'=' -f2)"
 RCON_PASSWORD="$(grep '^rcon.password=' server.properties | cut -d'=' -f2)"
 
 # Stop Minecraft
-rcon -a localhost:$RCON_PORT -p "$RCON_PASSWORD" stop
+$RCON -a "localhost:$RCON_PORT" -p "$RCON_PASSWORD" stop
 echo "Stop command sent to localhost:${RCON_PORT}..."
 
 # Sanity checks for PID
@@ -29,7 +33,7 @@ if [ ! -f "$PID_FILE" ]; then
   exit 1
 fi
 
-MINECRAFT_PID=$(cat "$PID_FILE")
+MINECRAFT_PID="$(cat "$PID_FILE")"
 if ! kill -0 "$MINECRAFT_PID" 2>/dev/null; then
   echo "No running Minecraft server with PID $MINECRAFT_PID. Removing stale PID file."
   rm -f "$PID_FILE"
@@ -47,6 +51,6 @@ while kill -0 "$MINECRAFT_PID" 2>/dev/null; do
 done
 
 rm -f "$PID_FILE"
-rm -f "$SERVER_INACTIVE_FILE"
+rm -f "$INACTIVITY_FILE"
 
 echo "Minecraft server stopped gracefully."

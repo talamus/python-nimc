@@ -1,28 +1,34 @@
 #!/usr/bin/env bash
-cd "$(dirname "$0")"
-set -e
+cd /persistent/server
+set -eo pipefail
 
 SERVER_ARGUMENTS=$(xargs < /etc/nimc/server.arguments)
-MEMORY_ALLOCATION="12G"
-PID_FILE="/run/minecraft/hasturian.pid"
-SERVER_INACTIVE_FILE="/run/minecraft/hasturian.inactive"
+PID_FILE="/run/nimc/server.pid"
+INACTIVITY_FILE="/run/nimc/server.inactive"
 
-# Make sure that `rcon` and `java` are installed
-java -version >/dev/null 2>&1
-rcon -v >/dev/null
+JAVA="/persistent/bin/java"
 
-# Try to find server.jar
-SERVER_JAR="$(ls *.jar | head -n 1)"
-if [ -z "$SERVER_JAR" ]; then
-  echo "No server.jar file found! Aborting."
+# Make sure that `java` is installed
+if [ ! -x "$JAVA" ]; then
+  echo "java not found at $JAVA! Aborting."
   exit 1
 fi
+
+# Try to find server jar
+shopt -s nullglob
+JARS=(*.jar)
+shopt -u nullglob
+if [ ${#JARS[@]} -eq 0 ]; then
+  echo "No .jar file found! Aborting."
+  exit 1
+fi
+SERVER_JAR="${JARS[0]}"
 echo "Server is $SERVER_JAR"
 
 # Check if server is already running
 if [ -f "$PID_FILE" ]; then
-  if kill -0 $(cat "$PID_FILE") 2>/dev/null; then
-    echo "Minecraft server already running with PID $(cat $PID_FILE)"
+  if kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+    echo "Minecraft server already running with PID $(cat "$PID_FILE")"
     exit 1
   else
     echo "Stale PID file found. Removing."
@@ -31,44 +37,15 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 # Remove the possibly existing old "Server inactive" file
-rm -f "$SERVER_INACTIVE_FILE"
+rm -f "$INACTIVITY_FILE"
 
 # Start the server in the background and save its PID
-java \
-  -server \
-  -Xms$MEMORY_ALLOCATION -Xmx$MEMORY_ALLOCATION \
-  -XX:+UseG1GC \
-  -XX:+UnlockExperimentalVMOptions \
-  -XX:MaxGCPauseMillis=50 \
-  -XX:InitiatingHeapOccupancyPercent=15 \
-  -XX:G1ReservePercent=20 \
-  -XX:G1NewSizePercent=20 \
-  -XX:G1MaxNewSizePercent=60 \
-  -XX:G1HeapRegionSize=32M \
-  -XX:SurvivorRatio=32 \
-  -XX:SoftRefLRUPolicyMSPerMB=50 \
-  -XX:MinHeapFreeRatio=20 \
-  -XX:MaxHeapFreeRatio=60 \
-  -XX:MaxTenuringThreshold=1 \
-  -XX:+UseStringDeduplication \
-  -XX:+ParallelRefProcEnabled \
-  -XX:+OptimizeStringConcat \
-  -XX:+AlwaysPreTouch \
-  -XX:+DisableExplicitGC \
-  -XX:+PerfDisableSharedMem \
-  -Djava.awt.headless=true \
-  -Dsun.rmi.dgc.server.gcInterval=2147483646 \
-  -Dfile.encoding=UTF-8 \
-  -Dgraal.CompilerConfiguration=community \
-  -Dusing.aikars.flags=true \
-  -Daikars.new.flags=true \
-  -Dadastra.stations=stations.json \
-  -jar "$SERVER_JAR" nogui &
-echo $! > "$PID_FILE"
+$JAVA $SERVER_ARGUMENTS -jar "$SERVER_JAR" nogui &
+echo "$!" > "$PID_FILE"
 
 # Wait a bit and check if the process is still running
 sleep 5
-if ! kill -0 $(cat "$PID_FILE") 2>/dev/null; then
+if ! kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
   echo "Failed to start Minecraft server."
   rm -f "$PID_FILE"
   exit 1

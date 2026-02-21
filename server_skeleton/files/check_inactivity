@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
-cd "$(dirname "$0")"
-set -e
+cd /persistent/server
+set -eo pipefail
 
-export PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
-SERVER_INACTIVE_FILE="/run/minecraft/hasturian.inactive"
+INACTIVITY_FILE="/run/nimc/server.inactive"
+
+RCON="/persistent/bin/rcon"
 
 # Print timestamp
 printf '[%(%Y-%m-%dT%H:%M:%S%z)T] ' -1
 
 # Make sure that `rcon` is installed
-rcon -v >/dev/null
+if [ ! -x "$RCON" ]; then
+  echo "rcon not found at $RCON! Aborting."
+  exit 1
+fi
 
 # Read RCON configuration from `server.properties`
 if [ ! -f "server.properties" ]; then
@@ -21,31 +25,31 @@ RCON_PORT="$(grep '^rcon.port=' server.properties | cut -d'=' -f2)"
 RCON_PASSWORD="$(grep '^rcon.password=' server.properties | cut -d'=' -f2)"
 
 # Get the list of players
-PLAYER_LIST=$(rcon -a "localhost:$RCON_PORT" -p "$RCON_PASSWORD" list)
+PLAYER_LIST=$($RCON -a "localhost:$RCON_PORT" -p "$RCON_PASSWORD" list)
 
 # Get the number of current players
 if [[ $PLAYER_LIST =~ There\ are\ ([0-9]+)\ of ]]; then
-    PLAYER_COUNT="${BASH_REMATCH[1]}"
-    echo "Player count: $PLAYER_COUNT"
+  PLAYER_COUNT="${BASH_REMATCH[1]}"
+  echo "Player count: $PLAYER_COUNT"
 
-    # Handle server inactive file based on player count
-    if [[ $PLAYER_COUNT -eq 0 ]]; then
-        # No players online - create inactive file if it doesn't exist
-        if [[ ! -f "$SERVER_INACTIVE_FILE" ]]; then
-            echo "No players online. Creating inactive timestamp file."
-            mkdir -p "$(dirname "$SERVER_INACTIVE_FILE")"
-            date +%s > "$SERVER_INACTIVE_FILE"
-        else
-            echo "Server already marked as inactive."
-        fi
+  # Handle server inactive file based on player count
+  if [[ $PLAYER_COUNT -eq 0 ]]; then
+    # No players online - create inactive file if it doesn't exist
+    if [[ ! -f "$INACTIVITY_FILE" ]]; then
+      echo "No players online. Creating inactive timestamp file."
+      mkdir -p "$(dirname "$INACTIVITY_FILE")"
+      date +%s > "$INACTIVITY_FILE"
     else
-        # Players are online - remove inactive file if it exists
-        if [[ -f "$SERVER_INACTIVE_FILE" ]]; then
-            echo "Players online. Removing inactive timestamp file."
-            rm "$SERVER_INACTIVE_FILE"
-        fi
+      echo "Server already marked as inactive."
     fi
+  else
+    # Players are online - remove inactive file if it exists
+    if [[ -f "$INACTIVITY_FILE" ]]; then
+      echo "Players online. Removing inactive timestamp file."
+      rm "$INACTIVITY_FILE"
+    fi
+  fi
 else
-    echo "Unable to determine the number of players. Aborting."
-    exit 1
+  echo "Unable to determine the number of players. Aborting."
+  exit 1
 fi
