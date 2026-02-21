@@ -1,0 +1,110 @@
+#!/usr/bin/env -S uv run python
+"""Generate .env.example from Settings models across all modules."""
+
+import secrets
+import sys
+from pathlib import Path
+
+from pydantic import AliasChoices
+from pydantic.fields import FieldInfo
+from pydantic_settings import BaseSettings
+
+# Add project root to path to import app modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from nimc.cli.settings import Settings as CLISettings  # noqa: E402
+from nimc.web.settings import ROOT_PATH, Settings as WebSettings  # noqa: E402
+
+
+def get_env_name(name: str, field_info: FieldInfo, prefix: str) -> str:
+    """Get the environment variable name, respecting aliases."""
+    alias = field_info.validation_alias
+    if isinstance(alias, AliasChoices):
+        choices = alias.choices
+        if choices:
+            first = choices[0]
+            return str(first).upper() if isinstance(first, str) else str(first)
+    return f"{prefix}{name}".upper()
+
+
+def format_default(field_info: FieldInfo) -> str:
+    """Format a default value for the .env example."""
+    default = field_info.default
+    if field_info.description == "Hetzner Cloud API token":
+        return default
+    if "Secret" in str(field_info.annotation):
+        return secrets.token_urlsafe(32)
+    if isinstance(default, Path) or (isinstance(default, str) and default.startswith("sqlite:")):
+        return str(default).replace(str(ROOT_PATH), ".")
+    if default is None:
+        return ""
+    return str(default)
+
+
+def get_env_names(settings_cls: type[BaseSettings]) -> dict[str, str]:
+    """Map field names to their environment variable names."""
+    prefix = settings_cls.model_config.get("env_prefix", "")
+    return {
+        name: get_env_name(name, field_info, prefix)
+        for name, field_info in settings_cls.model_fields.items()
+    }
+
+
+def generate_lines(
+    settings_cls: type[BaseSettings],
+    field_names: set[str],
+) -> list[str]:
+    """Generate .env.example lines for the given fields of a Settings class."""
+    prefix = settings_cls.model_config.get("env_prefix", "")
+    lines: list[str] = []
+
+    for name, field_info in settings_cls.model_fields.items():
+        if name not in field_names:
+            continue
+
+        env_name = get_env_name(name, field_info, prefix)
+        description = field_info.description or ""
+        default_str = format_default(field_info)
+        lines.append(f"# {description}")
+        lines.append(f"# {env_name}={default_str}")
+        lines.append("")
+
+    return lines
+
+
+def generate_env_example() -> str:
+    """Generate .env.example content from all Settings models."""
+    web_fields = set(WebSettings.model_fields.keys())
+    cli_fields = set(CLISettings.model_fields.keys())
+
+    common_fields = web_fields & cli_fields
+    web_only = web_fields - common_fields
+    cli_only = cli_fields - common_fields
+
+    lines = [
+        "# Configuration for nimc",
+        "# Copy to .env and modify as needed",
+        "",
+        "# --- Common ---",
+        "",
+    ]
+    lines.extend(generate_lines(WebSettings, common_fields))
+
+    lines.append("# --- Web UI ---")
+    lines.append("")
+    lines.extend(generate_lines(WebSettings, web_only))
+
+    lines.append("# --- CLI ---")
+    lines.append("")
+    lines.extend(generate_lines(CLISettings, cli_only))
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def main() -> None:
+    """Print .env.example content to stdout."""
+    print(generate_env_example(), end="")
+
+
+if __name__ == "__main__":
+    main()

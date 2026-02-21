@@ -1,0 +1,12 @@
+<div class="nav-user">
+    <span>Welcome,
+        <em class="{% if user.is_admin %}admin-{% endif %}user"{% if user.is_admin %} title="Administrator"{% endif %}>
+        {% if user.name %}
+            {{ user.name }}
+        {% else %}
+            {{ user.username | capitalize }}
+        {% endif %}
+        </em>
+    </span>
+    <button hx-post="/api/auth/logout" class="btn btn-attention">Logout</button>
+</div>

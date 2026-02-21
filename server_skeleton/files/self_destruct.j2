@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -e
+
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export HCLOUD_TOKEN="{{ hcloud_token }}"
+export SERVER_NAME="{{ server_name }}"
+export VOLUME_NAME="{{ volume_name }}"
+
+# Make sure that `hcloud` is available before proceeding
+/persistence/bin/hcloud version >/dev/null
+
+# Check if inactivity file exists and is older than 2 hours
+if [[ -f "/run/nimc/server.inactive" ]]; then
+    LAST_INACTIVE=$(< "/run/nimc/server.inactive")
+    NOW=$(date +%s)
+    ELAPSED=$((NOW - LAST_INACTIVE))
+
+    if (( ELAPSED < 3600 )); then
+        echo "Server inactive for only $((ELAPSED / 60)) minutes. Aborting self-destruct."
+        exit 0
+    else
+        echo "Server inactive for over 2 hours ($((ELAPSED / 60)) minutes). Proceeding with self-destruct."
+    fi
+else
+    echo "No inactivity file found. Server is active. Aborting self-destruct."
+    exit 0
+fi
+
+echo "Making a local copy of hcloud..."
+cp /persistence/bin/hcloud /root/bin/hcloud
+chmod +x /root/bin/hcloud
+
+echo "Starting self-destruct sequence"
+echo "Step 1: Stopping server gracefully..."
+
+if [ ! -f "/run/nimc/server.pid" ]; then
+  echo "No PID file found."
+else
+  echo "PID file is found. Server is running."
+  systemctl stop nimc.service
+  while [ -f "/run/nimc/server.pid" ]; do
+    sleep 1
+    echo -n "."
+  done
+fi
+
+echo "Step 2: Unmounting and detaching volume..."
+if mountpoint -q /persistence 2>/dev/null; then
+    echo "Unmounting /persistence..."
+    umount /persistence || {
+        echo "Failed to unmount /persistence. Trying force unmount..."
+        umount -f /persistence || echo "Force unmount failed, continuing anyway..."
+    }
+else
+    echo "Volume not mounted at /persistence."
+fi
+
+echo "Detaching volume '$VOLUME_NAME' from server..."
+/root/bin/hcloud volume detach "$VOLUME_NAME" || {
+    echo "Failed to detach volume. Volume might not be attached or already detached."
+}
+
+echo "Step 3: Self-destructing server..."
+echo "Destroying server '$SERVER_NAME'..."
+/root/bin/hcloud server delete "$SERVER_NAME" --quiet || {
+    echo "Failed to delete server. Manual intervention may be required."
+    exit 1
+}
+
+echo "Self-destruct sequence completed."

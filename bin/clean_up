@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+cd "$(dirname "$0")/.."
+
+git clean -fdx -e .venv -e .env -e servers -e nimc_web_users.db

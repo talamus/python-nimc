@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+    {% block title %}{% endblock %}{% if self.title() | trim %} &ndash; {% endif %}{{ app_name }}
+    </title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style> html { background-color: oklch(20% 0.02 290); } </style>
+    <link rel="preload" href="/static/fonts/nunito_normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/static/fonts/nunito_italic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/htmx.min.js"></script>
+    <script defer src="/static/js/alpine.min.js"></script>
+</head>
+<body{% if self.page_id() %} id="{{ self.page_id() | trim }}-page"{% endif %}>
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <h1 class="logo">{{ app_name }}</h1>
+                {% block nav %}{% endblock %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>v{{ app_version }}</p>
+            <p>&copy; 2026 Tero Niemi</p>
+        </div>
+    </footer>
+
+    <script>
+        // Configure HTMX to include CSRF token from cookie in all requests
+        document.addEventListener('htmx:configRequest', (event) => {
+            const match = document.cookie.match(/csrf_token=([^;]+)/);
+            if (match) {
+                event.detail.headers['X-CSRF-Token'] = match[1];
+            }
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Cache files
+.ruff_cache/
+pytest_cache/
+
+# Virtual environments
+.venv
+
+# Environment information
+.env
+*.db
+servers/*
+!servers/README.md
+
+# Other files
+out.*
+docs/example_*

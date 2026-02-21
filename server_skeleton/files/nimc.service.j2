@@ -1,0 +1,18 @@
+[Unit]
+Description={{ server_title }} Service
+After=network.target
+
+[Service]
+Type=forking
+User={{ service_username }}
+PIDFile=/run/nimc/server.pid
+ExecStart=/persistence/bin/server_start
+ExecStop=/persistence/bin/server_stop
+SuccessExitStatus=0 1
+Restart=on-failure
+RestartSec=10
+PrivateTmp=true
+WorkingDirectory=/persistence/server
+
+[Install]
+WantedBy=multi-user.target

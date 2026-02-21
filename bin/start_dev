@@ -1,0 +1,42 @@
+#!/usr/bin/env -S uv run python
+"""Development server - not included in production deployment."""
+import uvicorn
+import sys
+import os
+from pathlib import Path
+
+# Add project root to path to import app modules
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+os.chdir(project_root)
+
+from nimc.web.logging import LOG_CONFIG  # noqa: E402
+from nimc.web.settings import settings  # noqa: E402
+
+if sys.stdout.isatty():
+    GREEN = "\033[32m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
+else:
+    GREEN = BOLD = RESET = ""
+
+CONFIG = {
+    "host": settings.host,
+    "port": settings.port,
+    "reload": settings.reload,
+    "reload_dirs": ["nimc/web", "nimc/core"] if settings.reload else None,
+    "log_config": LOG_CONFIG,
+}
+
+if __name__ == '__main__':
+    print(f"{BOLD}{GREEN}Settings:{RESET}")
+    for key, value in settings.__dict__.items():
+        if not key.startswith('_'):
+            print(f"  {BOLD}{key}:{RESET} {value}")
+
+    print(f"\n{BOLD}{GREEN}Server configuration:{RESET}")
+    for key, value in CONFIG.items():
+        print(f"  {BOLD}{key}:{RESET} {value}")
+
+    print(f"\n{BOLD}{GREEN}Starting development server...{RESET}")
+    uvicorn.run("web.app:app", **CONFIG)

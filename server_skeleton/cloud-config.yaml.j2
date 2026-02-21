@@ -1,0 +1,90 @@
+#cloud-config
+users:
+  - name: {{ admin_username }}
+    uid: 1000
+    groups: sudo
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh-authorized-keys:
+      - {{ admin_ssh_public_key }}
+
+  - name: {{ service_username }}
+    uid: 1001
+    shell: /bin/bash
+
+write_files:
+  - path: /etc/systemd/system/nimc.service
+    owner: root:root
+    permissions: '0644'
+    content: {{ files_nimc_service }}
+
+  - path: /etc/ssh/sshd_config
+    owner: root:root
+    permissions: '0644'
+    content: {{ files_sshd_config }}
+
+  - path: /root/bin/self-destruct
+    owner: root:root
+    permissions: '0755'
+    content: {{ files_self_destruct }}
+
+ssh_pwauth: false
+
+package_update: true
+package_upgrade: true
+packages:
+  - gettext
+  - iptables
+  - iptables-persistent
+  {% for pkg in apt_packages -%}
+  - {{ pkg }}
+  {% endfor %}
+
+runcmd:
+  # Create PID directory for server user
+  - mkdir -p /run/nimc
+  - chown -R {{ service_username }}:{{ service_username }} /run/nimc
+
+  # Add persistent volume to /etc/fstab and mount it
+  - echo '/dev/disk/by-id/scsi-0HC_Volume_{{ volume_id }} /persistence ext4 discard,nofail,defaults 0 0' >> /etc/fstab
+  - mount /persistence
+
+  # Reload systemd, enable and start nimc service
+  - systemctl daemon-reload
+  - systemctl enable nimc.service
+  {% if not maintenance_mode -%}
+  - systemctl start nimc.service
+  {%- endif %}
+
+  # Set up cron job to check server inactivity every 15 minutes (nimc user)
+  - echo "*/15 * * * * /persistence/bin/check_inactivity >> /tmp/nimc_inactivity.log 2>&1" | crontab -u {{ service_username }} -
+
+  # Set up cron job for self-destruct (root user) approx 5 minutes after
+  - echo "20,35,50,5 * * * * /root/bin/self_destruct >> /var/log/self_destruct.log 2>&1" | crontab -u root -
+
+  # Configure iptables firewall
+  - iptables -F
+  - iptables -X
+  - iptables -t nat -F
+  - iptables -t nat -X
+  - iptables -t mangle -F
+  - iptables -t mangle -X
+
+  - iptables -P INPUT DROP
+  - iptables -P FORWARD DROP
+  - iptables -P OUTPUT ACCEPT
+
+  - iptables -A INPUT -i lo -j ACCEPT
+  - iptables -A OUTPUT -o lo -j ACCEPT
+
+  - iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+  - iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -m limit --limit 3/min --limit-burst 3 -j ACCEPT
+  - iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j DROP
+  {% for p in ports -%}
+  - iptables -A INPUT -p {{ p.protocol }} --dport {{ p.port }} -m conntrack --ctstate NEW -j ACCEPT
+  {% endfor -%}
+  - iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+
+  # Save iptables rules
+  - iptables-save > /etc/iptables/rules.v4

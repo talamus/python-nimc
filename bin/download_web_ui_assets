@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+cd "$(dirname "$0")"
+command -v curl >/dev/null 2>&1 || {
+    echo >&2 "Please install 'curl' to run this script.";
+    exit 1;
+}
+
+HTMX_VERSION="2"
+ALPINE_VERSION="3"
+
+echo "Downloading HTMX version ${HTMX_VERSION} from CDN..."
+HTMX_TEMP_FILE=$(mktemp)
+REDIRECT_URL=$(curl -sI "https://unpkg.com/htmx.org@${HTMX_VERSION}" | grep -i '^Location:' | awk '{print $2}' | tr -d '\r')
+curl -sL "https://unpkg.com${REDIRECT_URL}" -o "$HTMX_TEMP_FILE"
+echo "// HTMX version ${HTMX_VERSION} downloaded from https://unpkg.com${REDIRECT_URL}" > ../nimc/web/static/js/htmx.min.js
+cat "$HTMX_TEMP_FILE" >> ../nimc/web/static/js/htmx.min.js
+rm "$HTMX_TEMP_FILE"
+
+echo "Downloading Alpine.js version ${ALPINE_VERSION} from CDN..."
+ALPINE_TEMP_FILE=$(mktemp)
+REDIRECT_URL=$(curl -sI "https://unpkg.com/alpinejs@${ALPINE_VERSION}" | grep -i '^Location:' | awk '{print $2}' | tr -d '\r')
+curl -sL "https://unpkg.com${REDIRECT_URL}" -o "$ALPINE_TEMP_FILE"
+echo "// Alpine.js version ${ALPINE_VERSION} downloaded from https://unpkg.com${REDIRECT_URL}" > ../nimc/web/static/js/alpine.min.js
+cat "$ALPINE_TEMP_FILE" >> ../nimc/web/static/js/alpine.min.js
+rm "$ALPINE_TEMP_FILE"
+
+echo "Assets downloaded successfully."

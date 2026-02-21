@@ -1,0 +1,35 @@
+server_title = "Screen Friendly Name"
+server_slug = "slug-friendly-name"
+server_version = "21.0.15"
+
+admin_ssh_public_key = "ssh-ed25519 AAAAC3NzaC1l..."  # Required. Use ed25519 keys.
+admin_username = "admin"         # Optional. Default: admin
+service_username = "nimc"        # Optional. Default: nimc
+
+maintenance_mode = false         # Optional. If true, the nimc service will be enabled but not started.
+
+server_name = "slug-server"      # Optional. Default: {server_slug}-server
+primary_ip_name = "slug-ip"      # Optional. Default: {server_slug}-ip
+firewall_name = "slug-firewall"  # Optional. Default: {server_slug}-firewall
+volume_name = "slug-volume"      # Optional. Default: {server_slug}-volume
+
+apt_packages = []  # Optional. List of packages to be installed on the server. Example: ["nginx", "python3-pip"]
+
+# List of ports to be opened on the server.
+# SSH (22/tcp) and ICMP are auto-generated for admin users — no need to list them here.
+
+[[ports]]
+description = "Minecraft TCP"
+protocol = "tcp"
+port = 25565
+
+[[ports]]
+description = "Minecraft UDP"
+protocol = "udp"
+port = 25565
+
+# [[ports]]
+# description = "Web Panel"
+# protocol = "tcp"
+# port = 8080
+# admin_only = true  # Optional. Default: false. If true, only admin users and fixed sources get this port.

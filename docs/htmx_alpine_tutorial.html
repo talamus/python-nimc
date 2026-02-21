@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTMX + Alpine.js Tutorial for FastAPI Developers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --bg-surface: #16213e;
+            --bg-code: #0f0f23;
+            --bg-card: #1c2541;
+            --text: #e0e0e0;
+            --text-dim: #8892a4;
+            --text-bright: #ffffff;
+            --accent-htmx: #3b82f6;
+            --accent-alpine: #22d3ee;
+            --accent-python: #f59e0b;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --border: #2a3a5c;
+            --font-sans: 'IBM Plex Sans', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--bg-surface) 0%, #0d1b3e 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        .header .subtitle {
+            color: var(--text-dim);
+            font-size: 1.05rem;
+        }
+        .header .badges {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+        .badge-htmx { background: rgba(59,130,246,0.15); color: var(--accent-htmx); border: 1px solid rgba(59,130,246,0.3); }
+        .badge-alpine { background: rgba(34,211,238,0.15); color: var(--accent-alpine); border: 1px solid rgba(34,211,238,0.3); }
+        .badge-python { background: rgba(245,158,11,0.15); color: var(--accent-python); border: 1px solid rgba(245,158,11,0.3); }
+
+        .container {
+            max-width: 52rem;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 6rem;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 3rem;
+        }
+        .toc h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 1rem; }
+        .toc ol { padding-left: 1.5rem; }
+        .toc li { margin-bottom: 0.4rem; }
+        .toc a { color: var(--accent-htmx); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        /* Sections */
+        section {
+            margin-bottom: 3.5rem;
+        }
+        section h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            padding-top: 1rem;
+        }
+        section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-alpine);
+            margin: 1.5rem 0 0.5rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Key concept callouts */
+        .concept {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent-htmx);
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .concept.alpine {
+            border-left-color: var(--accent-alpine);
+        }
+        .concept.python {
+            border-left-color: var(--accent-python);
+        }
+        .concept.important {
+            border-left-color: var(--accent-red);
+        }
+        .concept strong {
+            color: var(--text-bright);
+        }
+
+        /* Code blocks */
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+        }
+        p code, li code {
+            background: var(--bg-code);
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+            color: var(--accent-green);
+        }
+
+        /* Syntax highlighting - minimal */
+        .kw { color: #c792ea; }       /* keywords */
+        .fn { color: #82aaff; }       /* functions */
+        .st { color: #c3e88d; }       /* strings */
+        .cm { color: #546e7a; }       /* comments */
+        .at { color: #ffcb6b; }       /* attributes / decorators */
+        .tg { color: #f07178; }       /* html tags */
+        .vl { color: #f78c6c; }       /* values */
+        .ht { color: #89ddff; }       /* htmx attrs */
+
+        /* Comparison table */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .comparison > div {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+        }
+        .comparison h4 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.75rem;
+        }
+        .comparison .old h4 { color: var(--text-dim); }
+        .comparison .new h4 { color: var(--accent-green); }
+
+        /* Separator */
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 3rem 0;
+        }
+
+        a { color: var(--accent-htmx); }
+
+        ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.3rem; }
+
+        .file-label {
+            display: inline-block;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            padding: 0.3rem 0.8rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: -1px;
+            position: relative;
+            z-index: 1;
+        }
+        .file-label + pre {
+            border-top-left-radius: 0;
+            margin-top: 0;
+        }
+
+        .mental-model {
+            background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(34,211,238,0.08));
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .mental-model h4 {
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .comparison { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.6rem; }
+            .container { padding: 1.5rem 1rem 4rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>HTMX + Alpine.js for FastAPI</h1>
+    <p class="subtitle">A practical tutorial for experienced developers coming from jQuery/Backbone</p>
+    <div class="badges">
+        <span class="badge badge-htmx">HTMX 2.0</span>
+        <span class="badge badge-alpine">Alpine.js 3</span>
+        <span class="badge badge-python">FastAPI + Jinja2</span>
+    </div>
+</div>
+
+<div class="container">
+
+<nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+        <li><a href="#mental-model">The Mental Model (jQuery → HTMX + Alpine)</a></li>
+        <li><a href="#setup">Project Setup</a></li>
+        <li><a href="#htmx-basics">HTMX Basics — HTML That Fetches HTML</a></li>
+        <li><a href="#alpine-basics">Alpine.js Basics — Reactive State Without a Build Step</a></li>
+        <li><a href="#lazy-forms">Pattern: Lazy-Loaded Form Content</a></li>
+        <li><a href="#sse">Pattern: Server-Sent Events (Live Updates)</a></li>
+        <li><a href="#log-tailing">Pattern: Log Tailing</a></li>
+        <li><a href="#combined">Combining HTMX + Alpine</a></li>
+        <li><a href="#gotchas">Gotchas &amp; Tips</a></li>
+        <li><a href="#project-structure">Recommended Project Structure</a></li>
+        <li><a href="#resources">Resources</a></li>
+    </ol>
+</nav>
+
+<!-- ============================================================ -->
+<section id="mental-model">
+<h2>1. The Mental Model</h2>
+
+<p>Coming from jQuery/Backbone, here's the key shift. In the jQuery era, you'd fetch JSON from the server, then write JavaScript to transform that JSON into DOM elements. HTMX flips this: <strong>the server returns rendered HTML fragments</strong>, and HTMX swaps them into the page. No client-side templating.</p>
+
+<div class="comparison">
+<div class="old">
+<h4>jQuery/Backbone Way</h4>
+<pre><code><span class="cm">// 1. Fetch JSON</span>
+$.get(<span class="st">"/api/users"</span>, <span class="kw">function</span>(data) {
+  <span class="cm">// 2. Build HTML in JS</span>
+  <span class="kw">var</span> html = data.map(<span class="kw">function</span>(u) {
+    <span class="kw">return</span> <span class="st">"&lt;li&gt;"</span> + u.name + <span class="st">"&lt;/li&gt;"</span>;
+  }).join(<span class="st">""</span>);
+  <span class="cm">// 3. Inject into DOM</span>
+  $(<span class="st">"#user-list"</span>).html(html);
+});</code></pre>
+</div>
+<div class="new">
+<h4>HTMX Way</h4>
+<pre><code><span class="cm">&lt;!-- That's it. Seriously. --&gt;</span>
+<span class="tg">&lt;ul</span> <span class="ht">hx-get=</span><span class="st">"/users"</span>
+     <span class="ht">hx-trigger=</span><span class="st">"load"</span>
+     <span class="ht">hx-swap=</span><span class="st">"innerHTML"</span><span class="tg">&gt;</span>
+  Loading...
+<span class="tg">&lt;/ul&gt;</span>
+
+<span class="cm">&lt;!-- Server returns:
+  &lt;li&gt;Alice&lt;/li&gt;
+  &lt;li&gt;Bob&lt;/li&gt;
+--&gt;</span></code></pre>
+</div>
+</div>
+
+<div class="mental-model">
+<h4>Who does what?</h4>
+<p><strong>HTMX</strong> handles talking to the server and swapping HTML. Think of it as "Ajax done through HTML attributes instead of JavaScript." It replaces jQuery's $.ajax / $.get / $.post and the DOM manipulation that follows.</p>
+<p><strong>Alpine.js</strong> handles small bits of client-side state and interactivity — toggles, dropdowns, tabs, form validation, show/hide logic. Think of it as "Vue.js that lives in your HTML attributes." It replaces the simple Backbone views and jQuery event handlers.</p>
+<p><strong>FastAPI + Jinja2</strong> renders the HTML on the server side. Your templates produce both full pages and small HTML fragments that HTMX swaps in.</p>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="setup">
+<h2>2. Project Setup</h2>
+
+<p>First, add the server-side dependencies you'll need:</p>
+
+<pre><code><span class="cm"># Jinja2 for templates, python-multipart for form handling</span>
+uv add jinja2 python-multipart sse-starlette</code></pre>
+
+<p>For HTMX and Alpine, there's no npm/build step. Just include them from a CDN in your base template, or download them into your static directory (better for production):</p>
+
+<div class="file-label">templates/base.html</div>
+<pre><code><span class="tg">&lt;!DOCTYPE html&gt;</span>
+<span class="tg">&lt;html</span> lang="en"<span class="tg">&gt;</span>
+<span class="tg">&lt;head&gt;</span>
+    <span class="tg">&lt;meta</span> charset="UTF-8"<span class="tg">&gt;</span>
+    <span class="tg">&lt;title&gt;</span>{% block title %}My App{% endblock %}<span class="tg">&lt;/title&gt;</span>
+
+    <span class="cm">&lt;!-- HTMX - the core library, ~14KB gzipped --&gt;</span>
+    <span class="tg">&lt;script</span> src="https://unpkg.com/htmx.org@2.0.4"<span class="tg">&gt;&lt;/script&gt;</span>
+
+    <span class="cm">&lt;!-- HTMX SSE extension - for live updates --&gt;</span>
+    <span class="tg">&lt;script</span> src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"<span class="tg">&gt;&lt;/script&gt;</span>
+
+    <span class="cm">&lt;!-- Alpine.js - ~15KB gzipped --&gt;</span>
+    <span class="tg">&lt;script</span> defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"<span class="tg">&gt;&lt;/script&gt;</span>
+
+    <span class="tg">&lt;link</span> rel="stylesheet" href="/static/style.css"<span class="tg">&gt;</span>
+<span class="tg">&lt;/head&gt;</span>
+<span class="tg">&lt;body&gt;</span>
+    {% block content %}{% endblock %}
+<span class="tg">&lt;/body&gt;</span>
+<span class="tg">&lt;/html&gt;</span></code></pre>
+
+<p>And the minimal FastAPI setup for serving templates:</p>
+
+<div class="file-label">app/main.py</div>
+<pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Request
+<span class="kw">from</span> fastapi.staticfiles <span class="kw">import</span> StaticFiles
+<span class="kw">from</span> fastapi.templating <span class="kw">import</span> Jinja2Templates
+
+app = FastAPI()
+app.mount(<span class="st">"/static"</span>, StaticFiles(directory=<span class="st">"static"</span>), name=<span class="st">"static"</span>)
+templates = Jinja2Templates(directory=<span class="st">"templates"</span>)
+
+
+<span class="at">@app.get</span>(<span class="st">"/"</span>)
+<span class="kw">async def</span> <span class="fn">homepage</span>(request: Request):
+    <span class="kw">return</span> templates.TemplateResponse(<span class="st">"index.html"</span>, {<span class="st">"request"</span>: request})
+</code></pre>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="htmx-basics">
+<h2>3. HTMX Basics</h2>
+
+<p>HTMX works through HTML attributes. There are really only four concepts you need to grasp:</p>
+
+<div class="concept">
+    <strong>hx-get, hx-post, hx-put, hx-delete</strong> — Which HTTP request to make, and where. These replace your jQuery $.ajax calls.<br><br>
+    <strong>hx-trigger</strong> — When to fire the request. Defaults to "click" for buttons, "submit" for forms, "change" for inputs. You can also use "load" (on page load), "revealed" (when scrolled into view), "every 2s" (polling), or custom events.<br><br>
+    <strong>hx-target</strong> — Which element to update with the response. Defaults to the element itself. Uses CSS selectors.<br><br>
+    <strong>hx-swap</strong> — How to insert the response HTML. Options: "innerHTML" (default), "outerHTML" (replace the whole element), "beforeend" (append), "afterbegin" (prepend), "delete", and others.
+</div>
+
+<h3>Example: A Click That Loads Content</h3>
+
+<div class="file-label">templates/index.html (the page)</div>
+<pre><code>{% extends "base.html" %}
+{% block content %}
+<span class="tg">&lt;h1&gt;</span>Server Dashboard<span class="tg">&lt;/h1&gt;</span>
+
+<span class="tg">&lt;button</span> <span class="ht">hx-get=</span><span class="st">"/server-status"</span>
+        <span class="ht">hx-target=</span><span class="st">"#status-panel"</span>
+        <span class="ht">hx-swap=</span><span class="st">"innerHTML"</span><span class="tg">&gt;</span>
+    Check Status
+<span class="tg">&lt;/button&gt;</span>
+
+<span class="tg">&lt;div</span> id="status-panel"<span class="tg">&gt;</span>
+    <span class="cm">&lt;!-- HTMX will put the server's response here --&gt;</span>
+<span class="tg">&lt;/div&gt;</span>
+{% endblock %}</code></pre>
+
+<div class="file-label">app/routes.py (the endpoint)</div>
+<pre><code><span class="at">@app.get</span>(<span class="st">"/server-status"</span>)
+<span class="kw">async def</span> <span class="fn">server_status</span>(request: Request):
+    <span class="cm"># Gather real data...</span>
+    status = {<span class="st">"cpu"</span>: <span class="st">"23%"</span>, <span class="st">"memory"</span>: <span class="st">"1.2GB"</span>, <span class="st">"uptime"</span>: <span class="st">"14d 3h"</span>}
+    <span class="cm"># Return an HTML fragment — NOT a full page</span>
+    <span class="kw">return</span> templates.TemplateResponse(
+        <span class="st">"partials/server_status.html"</span>,
+        {<span class="st">"request"</span>: request, <span class="st">"status"</span>: status}
+    )</code></pre>
+
+<div class="file-label">templates/partials/server_status.html (the fragment)</div>
+<pre><code><span class="cm">&lt;!-- No {% extends %}, no &lt;html&gt; — just the fragment --&gt;</span>
+<span class="tg">&lt;dl&gt;</span>
+    <span class="tg">&lt;dt&gt;</span>CPU<span class="tg">&lt;/dt&gt;&lt;dd&gt;</span>{{ status.cpu }}<span class="tg">&lt;/dd&gt;</span>
+    <span class="tg">&lt;dt&gt;</span>Memory<span class="tg">&lt;/dt&gt;&lt;dd&gt;</span>{{ status.memory }}<span class="tg">&lt;/dd&gt;</span>
+    <span class="tg">&lt;dt&gt;</span>Uptime<span class="tg">&lt;/dt&gt;&lt;dd&gt;</span>{{ status.uptime }}<span class="tg">&lt;/dd&gt;</span>
+<span class="tg">&lt;/dl&gt;</span></code></pre>
+
+<div class="concept">
+<strong>Key insight:</strong> Your FastAPI endpoints return HTML fragments, not JSON. You have two kinds of templates: <strong>full pages</strong> (extend base.html) and <strong>partials/fragments</strong> (just the HTML snippet to swap in). This is the fundamental pattern.
+</div>
+
+<h3>Example: Form Submission</h3>
+
+<pre><code><span class="cm">&lt;!-- HTMX intercepts the form submit, sends it via Ajax --&gt;</span>
+<span class="tg">&lt;form</span> <span class="ht">hx-post=</span><span class="st">"/servers"</span>
+      <span class="ht">hx-target=</span><span class="st">"#server-list"</span>
+      <span class="ht">hx-swap=</span><span class="st">"beforeend"</span><span class="tg">&gt;</span>
+    <span class="tg">&lt;input</span> name="hostname" placeholder="hostname"<span class="tg">&gt;</span>
+    <span class="tg">&lt;button</span> type="submit"<span class="tg">&gt;</span>Add Server<span class="tg">&lt;/button&gt;</span>
+<span class="tg">&lt;/form&gt;</span>
+
+<span class="tg">&lt;ul</span> id="server-list"<span class="tg">&gt;</span>
+    <span class="cm">&lt;!-- New server &lt;li&gt; gets appended here --&gt;</span>
+<span class="tg">&lt;/ul&gt;</span></code></pre>
+
+<pre><code><span class="at">@app.post</span>(<span class="st">"/servers"</span>)
+<span class="kw">async def</span> <span class="fn">add_server</span>(request: Request, hostname: str = Form()):
+    <span class="cm"># Save to DB, then return just the new list item</span>
+    <span class="kw">return</span> HTMLResponse(<span class="st">f"&lt;li&gt;{hostname} — added&lt;/li&gt;"</span>)</code></pre>
+
+<h3>Loading Indicators</h3>
+
+<p>HTMX adds a <code>htmx-request</code> CSS class to the element making a request. You can use this for loading states — no JavaScript needed:</p>
+
+<pre><code><span class="cm">/* Show a spinner while request is in flight */</span>
+<span class="tg">.htmx-indicator</span> {
+    display: none;
+}
+<span class="tg">.htmx-request .htmx-indicator</span> {
+    display: inline;
+}
+<span class="tg">.htmx-request.htmx-indicator</span> {
+    display: inline;
+}</code></pre>
+
+<pre><code><span class="tg">&lt;button</span> <span class="ht">hx-get=</span><span class="st">"/slow-data"</span><span class="tg">&gt;</span>
+    Load Data
+    <span class="tg">&lt;span</span> class="htmx-indicator"<span class="tg">&gt;</span>⏳<span class="tg">&lt;/span&gt;</span>
+<span class="tg">&lt;/button&gt;</span></code></pre>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="alpine-basics">
+<h2>4. Alpine.js Basics</h2>
+
+<p>Alpine handles things that are purely client-side — state that doesn't need to talk to the server. If you remember Backbone views with their events hash, Alpine is that concept made declarative.</p>
+
+<div class="concept alpine">
+<strong>Core Alpine directives:</strong><br><br>
+<code>x-data</code> — Declares a reactive scope (like a mini-component). The value is a JavaScript object.<br>
+<code>x-show</code> — Toggle visibility based on state (sets display:none).<br>
+<code>x-on:click</code> (or <code>@click</code>) — Event handlers.<br>
+<code>x-bind:class</code> (or <code>:class</code>) — Reactive attribute binding.<br>
+<code>x-text</code> — Set text content reactively.<br>
+<code>x-model</code> — Two-way binding for inputs (like Backbone model bindings).<br>
+<code>x-if</code> — Conditional rendering (actually removes/adds DOM elements).<br>
+<code>x-for</code> — Loop over arrays.
+</div>
+
+<h3>Example: Toggle Panel</h3>
+
+<pre><code><span class="cm">&lt;!-- x-data creates a reactive scope. open is our state. --&gt;</span>
+<span class="tg">&lt;div</span> <span class="ht">x-data=</span><span class="st">"{ open: false }"</span><span class="tg">&gt;</span>
+
+    <span class="tg">&lt;button</span> <span class="ht">@click=</span><span class="st">"open = !open"</span><span class="tg">&gt;</span>
+        Toggle Details
+    <span class="tg">&lt;/button&gt;</span>
+
+    <span class="tg">&lt;div</span> <span class="ht">x-show=</span><span class="st">"open"</span>
+         <span class="ht">x-transition</span><span class="tg">&gt;</span>
+        <span class="tg">&lt;p&gt;</span>These are the details. Hidden by default.<span class="tg">&lt;/p&gt;</span>
+    <span class="tg">&lt;/div&gt;</span>
+
+<span class="tg">&lt;/div&gt;</span></code></pre>
+
+<p>No JavaScript file. No event delegation. No <code>$(".details").toggle()</code>. The state and behavior live right in the HTML. The <code>x-transition</code> attribute gives you a smooth CSS transition for free.</p>
+
+<h3>Example: Tabs</h3>
+
+<pre><code><span class="tg">&lt;div</span> <span class="ht">x-data=</span><span class="st">"{ tab: 'overview' }"</span><span class="tg">&gt;</span>
+
+    <span class="tg">&lt;nav&gt;</span>
+        <span class="tg">&lt;button</span> <span class="ht">@click=</span><span class="st">"tab = 'overview'"</span>
+                <span class="ht">:class=</span><span class="st">"tab === 'overview' &amp;&amp; 'active'"</span><span class="tg">&gt;</span>
+            Overview
+        <span class="tg">&lt;/button&gt;</span>
+        <span class="tg">&lt;button</span> <span class="ht">@click=</span><span class="st">"tab = 'logs'"</span>
+                <span class="ht">:class=</span><span class="st">"tab === 'logs' &amp;&amp; 'active'"</span><span class="tg">&gt;</span>
+            Logs
+        <span class="tg">&lt;/button&gt;</span>
+    <span class="tg">&lt;/nav&gt;</span>
+
+    <span class="tg">&lt;div</span> <span class="ht">x-show=</span><span class="st">"tab === 'overview'"</span><span class="tg">&gt;</span>Overview content...<span class="tg">&lt;/div&gt;</span>
+    <span class="tg">&lt;div</span> <span class="ht">x-show=</span><span class="st">"tab === 'logs'"</span><span class="tg">&gt;</span>Logs content...<span class="tg">&lt;/div&gt;</span>
+
+<span class="tg">&lt;/div&gt;</span></code></pre>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="lazy-forms">
+<h2>5. Pattern: Lazy-Loaded Form Content</h2>
+
+<p>This is one of your requirements: the page renders immediately, the form fields appear, but the pre-filled data arrives later from a slow connection. Here's how:</p>
+
+<div class="file-label">templates/edit_server.html</div>
+<pre><code>{% extends "base.html" %}
+{% block content %}
+<span class="tg">&lt;h1&gt;</span>Edit Server<span class="tg">&lt;/h1&gt;</span>
+
+<span class="tg">&lt;form</span> <span class="ht">hx-post=</span><span class="st">"/servers/{{ server_id }}"</span><span class="tg">&gt;</span>
+
+    <span class="cm">&lt;!-- This div loads its content from a slow endpoint --&gt;</span>
+    <span class="tg">&lt;div</span> <span class="ht">hx-get=</span><span class="st">"/servers/{{ server_id }}/form-data"</span>
+         <span class="ht">hx-trigger=</span><span class="st">"load"</span>
+         <span class="ht">hx-swap=</span><span class="st">"outerHTML"</span><span class="tg">&gt;</span>
+
+        <span class="cm">&lt;!-- Skeleton / placeholder shown while loading --&gt;</span>
+        <span class="tg">&lt;fieldset</span> disabled<span class="tg">&gt;</span>
+            <span class="tg">&lt;label&gt;</span>Hostname<span class="tg">&lt;/label&gt;</span>
+            <span class="tg">&lt;input</span> type="text" placeholder="Loading..."<span class="tg">&gt;</span>
+            <span class="tg">&lt;label&gt;</span>IP Address<span class="tg">&lt;/label&gt;</span>
+            <span class="tg">&lt;input</span> type="text" placeholder="Loading..."<span class="tg">&gt;</span>
+        <span class="tg">&lt;/fieldset&gt;</span>
+
+    <span class="tg">&lt;/div&gt;</span>
+
+    <span class="tg">&lt;button</span> type="submit"<span class="tg">&gt;</span>Save<span class="tg">&lt;/button&gt;</span>
+<span class="tg">&lt;/form&gt;</span>
+{% endblock %}</code></pre>
+
+<div class="file-label">app/routes.py</div>
+<pre><code><span class="at">@app.get</span>(<span class="st">"/servers/{server_id}/form-data"</span>)
+<span class="kw">async def</span> <span class="fn">server_form_data</span>(request: Request, server_id: int):
+    <span class="cm"># This might be slow — talking to a remote server</span>
+    server = <span class="kw">await</span> fetch_server_details(server_id)  <span class="cm"># slow!</span>
+
+    <span class="cm"># Return a fragment with pre-filled values</span>
+    <span class="kw">return</span> templates.TemplateResponse(
+        <span class="st">"partials/server_form_fields.html"</span>,
+        {<span class="st">"request"</span>: request, <span class="st">"server"</span>: server}
+    )</code></pre>
+
+<div class="file-label">templates/partials/server_form_fields.html</div>
+<pre><code><span class="cm">&lt;!-- This replaces the skeleton (note: outerHTML swap) --&gt;</span>
+<span class="tg">&lt;fieldset&gt;</span>
+    <span class="tg">&lt;label&gt;</span>Hostname<span class="tg">&lt;/label&gt;</span>
+    <span class="tg">&lt;input</span> type="text" name="hostname"
+           value="{{ server.hostname }}"<span class="tg">&gt;</span>
+    <span class="tg">&lt;label&gt;</span>IP Address<span class="tg">&lt;/label&gt;</span>
+    <span class="tg">&lt;input</span> type="text" name="ip_address"
+           value="{{ server.ip_address }}"<span class="tg">&gt;</span>
+<span class="tg">&lt;/fieldset&gt;</span></code></pre>
+
+<div class="concept">
+<strong>What happens:</strong> The page loads instantly with the form skeleton (disabled inputs with "Loading..." placeholders). HTMX immediately fires a GET request to <code>/servers/{id}/form-data</code>. When the slow response arrives, the skeleton is replaced with the real, pre-filled form fields. The user sees a fast page load with a clear loading state.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="sse">
+<h2>6. Pattern: Server-Sent Events (Live Updates)</h2>
+
+<p>For your server status dashboard that needs to update actively, SSE is the right tool. It's simpler than WebSockets (one-way, server-to-client) and perfect for status updates.</p>
+
+<div class="concept important">
+<strong>SSE vs WebSockets vs Polling:</strong> SSE is one-way (server → client), auto-reconnects, and works over regular HTTP. Use it when the server pushes updates. WebSockets are two-way — overkill if you just need to display status. Polling (<code>hx-trigger="every 5s"</code>) is the simplest option but wastes requests when nothing changes. For your use cases, SSE is the sweet spot.
+</div>
+
+<div class="file-label">app/routes.py</div>
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">from</span> sse_starlette.sse <span class="kw">import</span> EventSourceResponse
+
+
+<span class="kw">async def</span> <span class="fn">status_event_generator</span>(request: Request):
+    <span class="cm">"""Yields server status as HTML fragments via SSE."""</span>
+    <span class="kw">while True</span>:
+        <span class="kw">if await</span> request.is_disconnected():
+            <span class="kw">break</span>
+
+        <span class="cm"># Gather current status</span>
+        status = <span class="kw">await</span> get_server_status()
+
+        <span class="cm"># Render a template fragment to HTML string</span>
+        html = templates.get_template(
+            <span class="st">"partials/status_badge.html"</span>
+        ).render(status=status)
+
+        <span class="cm"># Yield as an SSE event with a named event type</span>
+        <span class="kw">yield</span> {
+            <span class="st">"event"</span>: <span class="st">"status-update"</span>,
+            <span class="st">"data"</span>: html,
+        }
+
+        <span class="kw">await</span> asyncio.sleep(<span class="vl">5</span>)  <span class="cm"># Check every 5 seconds</span>
+
+
+<span class="at">@app.get</span>(<span class="st">"/servers/status-stream"</span>)
+<span class="kw">async def</span> <span class="fn">status_stream</span>(request: Request):
+    <span class="kw">return</span> EventSourceResponse(status_event_generator(request))</code></pre>
+
+<div class="file-label">templates/dashboard.html</div>
+<pre><code>{% extends "base.html" %}
+{% block content %}
+<span class="tg">&lt;h1&gt;</span>Server Dashboard<span class="tg">&lt;/h1&gt;</span>
+
+<span class="cm">&lt;!-- Connect to the SSE stream --&gt;</span>
+<span class="tg">&lt;div</span> <span class="ht">hx-ext=</span><span class="st">"sse"</span>
+     <span class="ht">sse-connect=</span><span class="st">"/servers/status-stream"</span><span class="tg">&gt;</span>
+
+    <span class="cm">&lt;!-- This div updates when a "status-update" event arrives --&gt;</span>
+    <span class="tg">&lt;div</span> <span class="ht">sse-swap=</span><span class="st">"status-update"</span><span class="tg">&gt;</span>
+        <span class="cm">&lt;!-- Initial content / loading state --&gt;</span>
+        <span class="tg">&lt;p&gt;</span>Connecting to status stream...<span class="tg">&lt;/p&gt;</span>
+    <span class="tg">&lt;/div&gt;</span>
+
+<span class="tg">&lt;/div&gt;</span>
+{% endblock %}</code></pre>
+
+<div class="file-label">templates/partials/status_badge.html</div>
+<pre><code><span class="tg">&lt;div</span> class="status-badge {{ 'healthy' if status.ok else 'error' }}"<span class="tg">&gt;</span>
+    <span class="tg">&lt;strong&gt;</span>{{ status.name }}<span class="tg">&lt;/strong&gt;</span>
+    <span class="tg">&lt;span&gt;</span>CPU: {{ status.cpu }}% · Mem: {{ status.memory }}%<span class="tg">&lt;/span&gt;</span>
+    <span class="tg">&lt;time&gt;</span>{{ status.checked_at }}<span class="tg">&lt;/time&gt;</span>
+<span class="tg">&lt;/div&gt;</span></code></pre>
+
+<div class="concept">
+<strong>The flow:</strong> The browser opens a persistent connection to <code>/servers/status-stream</code>. Every 5 seconds, FastAPI pushes a new HTML fragment. HTMX receives the named event "status-update" and swaps the fragment into the <code>sse-swap="status-update"</code> element. The dashboard updates live with zero client-side JavaScript.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="log-tailing">
+<h2>7. Pattern: Log Tailing</h2>
+
+<p>This combines SSE with append-mode swapping — new log lines get added to the bottom, and we auto-scroll.</p>
+
+<div class="file-label">app/routes.py</div>
+<pre><code><span class="kw">async def</span> <span class="fn">log_stream_generator</span>(request: Request, log_path: str):
+    <span class="cm">"""Stream log file lines as they appear."""</span>
+    <span class="kw">import</span> aiofiles
+
+    <span class="kw">async with</span> aiofiles.open(log_path, mode=<span class="st">"r"</span>) <span class="kw">as</span> f:
+        <span class="cm"># Seek to end of file (tail, not cat)</span>
+        <span class="kw">await</span> f.seek(<span class="vl">0</span>, <span class="vl">2</span>)
+
+        <span class="kw">while True</span>:
+            <span class="kw">if await</span> request.is_disconnected():
+                <span class="kw">break</span>
+
+            line = <span class="kw">await</span> f.readline()
+            <span class="kw">if</span> line:
+                <span class="cm"># Each line is sent as a separate SSE event</span>
+                <span class="kw">yield</span> {
+                    <span class="st">"event"</span>: <span class="st">"log-line"</span>,
+                    <span class="st">"data"</span>: <span class="st">f'&lt;div class="log-line"&gt;{line.strip()}&lt;/div&gt;'</span>,
+                }
+            <span class="kw">else</span>:
+                <span class="kw">await</span> asyncio.sleep(<span class="vl">0.3</span>)
+
+
+<span class="at">@app.get</span>(<span class="st">"/logs/{service}/stream"</span>)
+<span class="kw">async def</span> <span class="fn">log_stream</span>(request: Request, service: str):
+    log_path = <span class="st">f"/var/log/{service}.log"</span>
+    <span class="kw">return</span> EventSourceResponse(log_stream_generator(request, log_path))</code></pre>
+
+<div class="file-label">templates/log_viewer.html</div>
+<pre><code><span class="cm">&lt;!-- Alpine handles the auto-scroll behavior --&gt;</span>
+<span class="tg">&lt;div</span> <span class="ht">x-data=</span><span class="st">"{ autoScroll: true }"</span>
+     <span class="ht">hx-ext=</span><span class="st">"sse"</span>
+     <span class="ht">sse-connect=</span><span class="st">"/logs/{{ service }}/stream"</span><span class="tg">&gt;</span>
+
+    <span class="tg">&lt;label&gt;</span>
+        <span class="tg">&lt;input</span> type="checkbox" <span class="ht">x-model=</span><span class="st">"autoScroll"</span><span class="tg">&gt;</span> Auto-scroll
+    <span class="tg">&lt;/label&gt;</span>
+
+    <span class="cm">&lt;!-- Log lines get appended here --&gt;</span>
+    <span class="tg">&lt;div</span> id="log-output"
+         class="log-output"
+         <span class="ht">sse-swap=</span><span class="st">"log-line"</span>
+         <span class="ht">hx-swap=</span><span class="st">"beforeend"</span>
+         <span class="cm">&lt;!-- Alpine: scroll to bottom when new content arrives --&gt;</span>
+         <span class="ht">@sse-message=</span><span class="st">"if(autoScroll) $el.scrollTop = $el.scrollHeight"</span><span class="tg">&gt;</span>
+    <span class="tg">&lt;/div&gt;</span>
+
+<span class="tg">&lt;/div&gt;</span></code></pre>
+
+<pre><code><span class="cm">/* CSS for the log viewer */</span>
+.log-output {
+    height: 500px;
+    overflow-y: auto;
+    background: #0a0a0a;
+    font-family: monospace;
+    font-size: 0.85rem;
+    padding: 1rem;
+}
+.log-line {
+    padding: 2px 0;
+    border-bottom: 1px solid #1a1a1a;
+    white-space: pre-wrap;
+    word-break: break-all;
+}</code></pre>
+
+<div class="concept alpine">
+<strong>HTMX + Alpine working together:</strong> HTMX handles the SSE connection and appends new log lines (<code>hx-swap="beforeend"</code>). Alpine handles the auto-scroll checkbox state and the scroll behavior. Notice how <code>@sse-message</code> uses Alpine to react to HTMX events — the two libraries play nicely together.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="combined">
+<h2>8. Combining HTMX + Alpine</h2>
+
+<p>Here's a more complete example showing both working together — a server card with status, actions, and local UI state:</p>
+
+<div class="file-label">templates/partials/server_card.html</div>
+<pre><code><span class="tg">&lt;div</span> class="server-card"
+     <span class="ht">x-data=</span><span class="st">"{ expanded: false, confirming: false }"</span><span class="tg">&gt;</span>
+
+    <span class="cm">&lt;!-- Header: always visible --&gt;</span>
+    <span class="tg">&lt;div</span> class="card-header" <span class="ht">@click=</span><span class="st">"expanded = !expanded"</span><span class="tg">&gt;</span>
+        <span class="tg">&lt;h3&gt;</span>{{ server.name }}<span class="tg">&lt;/h3&gt;</span>
+        <span class="tg">&lt;span</span> <span class="ht">:class=</span><span class="st">"expanded ? 'arrow-up' : 'arrow-down'"</span><span class="tg">&gt;</span>▾<span class="tg">&lt;/span&gt;</span>
+    <span class="tg">&lt;/div&gt;</span>
+
+    <span class="cm">&lt;!-- Details: toggled by Alpine --&gt;</span>
+    <span class="tg">&lt;div</span> <span class="ht">x-show=</span><span class="st">"expanded"</span> <span class="ht">x-transition</span><span class="tg">&gt;</span>
+
+        <span class="cm">&lt;!-- Live status via SSE --&gt;</span>
+        <span class="tg">&lt;div</span> <span class="ht">hx-ext=</span><span class="st">"sse"</span>
+             <span class="ht">sse-connect=</span><span class="st">"/servers/{{ server.id }}/status-stream"</span><span class="tg">&gt;</span>
+            <span class="tg">&lt;div</span> <span class="ht">sse-swap=</span><span class="st">"status-update"</span><span class="tg">&gt;</span>
+                Loading status...
+            <span class="tg">&lt;/div&gt;</span>
+        <span class="tg">&lt;/div&gt;</span>
+
+        <span class="cm">&lt;!-- Action: restart with confirmation --&gt;</span>
+        <span class="tg">&lt;div</span> <span class="ht">x-show=</span><span class="st">"!confirming"</span><span class="tg">&gt;</span>
+            <span class="tg">&lt;button</span> <span class="ht">@click=</span><span class="st">"confirming = true"</span><span class="tg">&gt;</span>
+                Restart Server
+            <span class="tg">&lt;/button&gt;</span>
+        <span class="tg">&lt;/div&gt;</span>
+        <span class="tg">&lt;div</span> <span class="ht">x-show=</span><span class="st">"confirming"</span> <span class="ht">x-transition</span><span class="tg">&gt;</span>
+            <span class="tg">&lt;p&gt;</span>Are you sure?<span class="tg">&lt;/p&gt;</span>
+            <span class="tg">&lt;button</span> <span class="ht">hx-post=</span><span class="st">"/servers/{{ server.id }}/restart"</span>
+                    <span class="ht">hx-target=</span><span class="st">"closest .server-card"</span>
+                    <span class="ht">hx-swap=</span><span class="st">"outerHTML"</span><span class="tg">&gt;</span>
+                Yes, restart
+            <span class="tg">&lt;/button&gt;</span>
+            <span class="tg">&lt;button</span> <span class="ht">@click=</span><span class="st">"confirming = false"</span><span class="tg">&gt;</span>Cancel<span class="tg">&lt;/button&gt;</span>
+        <span class="tg">&lt;/div&gt;</span>
+
+    <span class="tg">&lt;/div&gt;</span>
+<span class="tg">&lt;/div&gt;</span></code></pre>
+
+<div class="concept">
+<strong>The division of labor:</strong><br>
+Alpine handles: expand/collapse toggle, confirmation dialog state, transitions — all purely client-side UI state.<br>
+HTMX handles: SSE status stream, posting the restart action, replacing the card with updated HTML from the server — all server communication.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="gotchas">
+<h2>9. Gotchas &amp; Tips</h2>
+
+<h3>Things that tripped me up coming from jQuery</h3>
+
+<p><strong>Return fragments, not JSON.</strong> The single biggest mental shift. Your HTMX endpoints return rendered HTML. If you catch yourself writing <code>return {"status": "ok"}</code> from an HTMX endpoint, stop — return HTML instead.</p>
+
+<p><strong>Partial templates don't extend base.html.</strong> Keep them in a <code>templates/partials/</code> directory. They're just snippets of HTML, not full pages.</p>
+
+<p><strong>Use hx-target carefully.</strong> Without it, HTMX replaces the innerHTML of the element that made the request. This is usually what you want for buttons and divs, but for forms you often want to target a different element.</p>
+
+<p><strong>hx-swap="outerHTML" vs "innerHTML".</strong> <code>outerHTML</code> replaces the element itself (including the hx-* attributes). <code>innerHTML</code> replaces only its children. If your swap target needs to keep receiving updates, use <code>innerHTML</code> or make sure the replacement HTML includes the same hx-* attributes.</p>
+
+<p><strong>Alpine x-data scope.</strong> Everything inside an <code>x-data</code> element can access that state. Elements outside can't. If you need shared state across distant elements, look into Alpine's <code>Alpine.store()</code>.</p>
+
+<p><strong>HTMX events for debugging.</strong> Add this during development to see what HTMX is doing:</p>
+
+<pre><code><span class="cm">&lt;!-- Add to your base.html during development --&gt;</span>
+<span class="tg">&lt;script&gt;</span>
+    document.body.addEventListener(<span class="st">"htmx:beforeRequest"</span>, <span class="kw">function</span>(e) {
+        console.log(<span class="st">"HTMX request:"</span>, e.detail);
+    });
+    document.body.addEventListener(<span class="st">"htmx:afterSwap"</span>, <span class="kw">function</span>(e) {
+        console.log(<span class="st">"HTMX swapped:"</span>, e.detail);
+    });
+<span class="tg">&lt;/script&gt;</span></code></pre>
+
+<h3>FastAPI-specific tips</h3>
+
+<p><strong>Detect HTMX requests.</strong> HTMX sends an <code>HX-Request: true</code> header. Use this to return a full page for direct navigation vs. a fragment for HTMX:</p>
+
+<pre><code><span class="at">@app.get</span>(<span class="st">"/servers/{server_id}"</span>)
+<span class="kw">async def</span> <span class="fn">server_detail</span>(request: Request, server_id: int):
+    server = <span class="kw">await</span> get_server(server_id)
+
+    <span class="cm"># If HTMX is asking, return just the fragment</span>
+    <span class="kw">if</span> request.headers.get(<span class="st">"HX-Request"</span>):
+        <span class="kw">return</span> templates.TemplateResponse(
+            <span class="st">"partials/server_detail.html"</span>,
+            {<span class="st">"request"</span>: request, <span class="st">"server"</span>: server}
+        )
+
+    <span class="cm"># Otherwise, return the full page (direct URL visit, bookmark)</span>
+    <span class="kw">return</span> templates.TemplateResponse(
+        <span class="st">"server_detail.html"</span>,
+        {<span class="st">"request"</span>: request, <span class="st">"server"</span>: server}
+    )</code></pre>
+
+<p><strong>Response headers for HTMX.</strong> You can send HTMX instructions via response headers — useful for redirects or triggering events after a form submit:</p>
+
+<pre><code><span class="kw">from</span> fastapi.responses <span class="kw">import</span> HTMLResponse
+
+<span class="at">@app.post</span>(<span class="st">"/servers"</span>)
+<span class="kw">async def</span> <span class="fn">create_server</span>(request: Request, hostname: str = Form()):
+    server = <span class="kw">await</span> save_server(hostname)
+    html = templates.get_template(<span class="st">"partials/server_row.html"</span>).render(
+        server=server
+    )
+    response = HTMLResponse(html)
+    <span class="cm"># Tell HTMX to trigger a custom event on the client</span>
+    response.headers[<span class="st">"HX-Trigger"</span>] = <span class="st">"server-added"</span>
+    <span class="kw">return</span> response</code></pre>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="project-structure">
+<h2>10. Recommended Project Structure</h2>
+
+<pre><code>my-project/
+├── pyproject.toml
+├── app/
+│   ├── __init__.py
+│   ├── main.py              <span class="cm"># FastAPI app, middleware</span>
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── dashboard.py     <span class="cm"># Dashboard routes</span>
+│   │   └── servers.py       <span class="cm"># Server CRUD routes</span>
+│   └── services/
+│       └── monitoring.py    <span class="cm"># Business logic</span>
+├── templates/
+│   ├── base.html            <span class="cm"># Base layout with HTMX/Alpine</span>
+│   ├── index.html           <span class="cm"># Full pages extend base.html</span>
+│   ├── dashboard.html
+│   └── partials/            <span class="cm"># ⬅ HTML fragments for HTMX</span>
+│       ├── server_card.html
+│       ├── server_form_fields.html
+│       ├── status_badge.html
+│       └── log_line.html
+├── static/
+│   ├── style.css
+│   ├── htmx.min.js         <span class="cm"># Optional: self-hosted</span>
+│   └── alpine.min.js       <span class="cm"># Optional: self-hosted</span>
+└── tests/
+    └── test_routes.py</code></pre>
+
+<div class="concept">
+<strong>The partials directory is the key organizational pattern.</strong> Each partial is a small, focused HTML fragment that one or more HTMX endpoints can render. Keep them small and reusable. A partial should typically map 1:1 with an HTMX endpoint.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="resources">
+<h2>11. Resources</h2>
+
+<p>The official docs are quite good and readable — both projects value simplicity in their documentation too:</p>
+
+<ul>
+    <li><a href="https://htmx.org/docs/">HTMX Docs</a> — Read the "introduction" page. It's short and covers 80% of what you need.</li>
+    <li><a href="https://htmx.org/reference/">HTMX Attribute Reference</a> — Your cheat sheet. Bookmark this.</li>
+    <li><a href="https://alpinejs.dev/start-here">Alpine.js Start Here</a> — The 15-minute walkthrough.</li>
+    <li><a href="https://alpinejs.dev/directives">Alpine.js Directives</a> — All the x-* attributes.</li>
+    <li><a href="https://htmx.org/essays/hypermedia-friendly-scripting/">Hypermedia-Friendly Scripting</a> — The philosophy behind HTMX + Alpine working together.</li>
+    <li><a href="https://sse-starlette.readthedocs.io/">sse-starlette</a> — The SSE library for FastAPI.</li>
+</ul>
+
+<div class="mental-model">
+<h4>Quick Reference Card</h4>
+<p>
+<strong>Need to fetch/send data to server?</strong> → HTMX (<code>hx-get</code>, <code>hx-post</code>)<br>
+<strong>Need to toggle/show/hide something?</strong> → Alpine (<code>x-show</code>, <code>x-data</code>)<br>
+<strong>Need live updates from server?</strong> → HTMX SSE (<code>hx-ext="sse"</code>, <code>sse-connect</code>)<br>
+<strong>Need client-side form validation?</strong> → Alpine (<code>x-model</code>, computed)<br>
+<strong>Need loading indicators?</strong> → HTMX CSS classes (<code>.htmx-request</code>)<br>
+<strong>Need to react to server events on client?</strong> → Alpine listening to HTMX events
+</p>
+</div>
+
+</section>
+
+</div>
+
+</body>
+</html>

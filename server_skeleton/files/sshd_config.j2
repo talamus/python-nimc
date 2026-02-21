@@ -1,0 +1,59 @@
+# Hardened sshd configuration.
+
+Include /etc/ssh/sshd_config.d/*.conf
+
+# Only use Ed25519 host keys
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Cryptography -- modern algorithms only
+KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+# Authentication
+LoginGraceTime 30
+PermitRootLogin no
+StrictModes yes
+MaxAuthTries 3
+MaxSessions 5
+
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+PasswordAuthentication no
+PermitEmptyPasswords no
+KbdInteractiveAuthentication no
+HostbasedAuthentication no
+
+# Kerberos / GSSAPI -- disabled
+KerberosAuthentication no
+GSSAPIAuthentication no
+
+# PAM (account/session checks only -- auth methods above take precedence)
+UsePAM yes
+
+# Forwarding -- locked down
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no
+PermitTunnel no
+GatewayPorts no
+
+# Session
+PrintMotd no
+ClientAliveInterval 100
+ClientAliveCountMax 3
+MaxStartups 10:30:60
+
+# Environment
+AcceptEnv LANG LC_* COLORTERM NO_COLOR
+
+# Access control
+AllowUsers {{ admin_username }}
+
+# Subsystems
+Subsystem sftp /usr/lib/openssh/sftp-server

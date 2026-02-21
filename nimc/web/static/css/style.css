@@ -1,0 +1,319 @@
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/static/fonts/nunito_normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/static/fonts/nunito_italic.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+    --text: oklch(95% 0.02 93);
+    --admin-text: oklch(63% 0.17 255);
+    --base-hue: 290;  /* Backgrounds, boxes and borders */
+    --accent-hue: 222;  /* Primary buttons and accents */
+    --attention-hue: 25;  /* Errors and attention elements */
+
+    /* Base palette */
+    --dark-background: oklch(20% 0.02 var(--base-hue));
+    --background: oklch(30% 0.03 var(--base-hue));
+    --accent: oklch(55% 0.1 var(--accent-hue));
+    --light-accent: oklch(70% 0.15 var(--accent-hue));
+    --attention-text: oklch(65% 0.2 var(--attention-hue));
+    --box-shadow: 0 0 10px 5px rgb(0 0 0 / 0.2);
+    --button-shadow: 0 0 10px 5px rgb(0 0 0 / 0.15);
+
+    /* Derived */
+    --dim-text: oklch(55% 0.02 var(--base-hue));
+    --input-border: oklch(50% 0.02 var(--base-hue));
+    --button: oklch(50% 0.1 var(--base-hue));
+    --button-hover: oklch(60% 0.1 var(--base-hue));
+    --attention: oklch(50% 0.15 var(--attention-hue));
+    --attention-hover: oklch(65% 0.18 var(--attention-hue));
+}
+
+/*** Reset and Base styles *******************************************/
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, input, button {
+    font-family: 'Nunito', sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+}
+
+body {
+    line-height: 1.6;
+    color: var(--text);
+    background-color: var(--dark-background);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+h2 {
+    margin: 1rem 0;
+}
+
+.error-message {
+    color: var(--attention-text);
+    font-style: italic;
+}
+
+/*** Header and Navigation *******************************************/
+
+header {
+    background-color: var(--background);
+    color: var(--text);
+    padding: 1rem 0;
+    box-shadow: var(--box-shadow);
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.logo {
+    font-size: 1.5rem;
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-user .admin-user {
+    color: var(--admin-text);
+}
+
+.nav-user .admin-user::after {
+    content: "\01F6E1\FE0F";
+    margin-left: -0.25rem;
+    font-style: normal;
+}
+
+/*** Footer **********************************************************/
+
+footer {
+    background-color: var(--background);
+    color: var(--text);
+    text-align: center;
+    padding: 1rem 0;
+    margin-top: auto;
+    box-shadow: var(--box-shadow);
+}
+
+footer .container {
+    display: flex;
+    justify-content: space-between;
+}
+
+/*** Content Boxes ***************************************************/
+
+.box {
+    background: var(--background);
+    margin: 1rem 0;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+}
+
+.box-title {
+    color: var(--text);
+    margin: 0 0 1rem 0;
+}
+
+/*** Forms ***********************************************************/
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 2rem 0;
+}
+
+.form-field .label {
+    color: var(--dim-text);
+    margin: 0 0 0.5rem 0;
+    text-align: left;
+}
+
+.form-field input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--input-border);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+    background-color: transparent;
+    color: var(--text);
+}
+
+.form-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/*** Buttons *********************************************************/
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    color: var(--text);
+}
+
+.btn:hover {
+    box-shadow: var(--button-shadow);
+}
+
+.btn:active {
+    box-shadow: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    box-shadow: none;
+}
+
+.btn-primary {
+    background-color: var(--accent);
+}
+
+.btn-primary:hover {
+    background-color: var(--light-accent);
+}
+
+.btn-primary:active {
+    background-color: var(--accent);
+}
+
+.btn-secondary {
+    background-color: var(--button);
+}
+
+.btn-secondary:hover {
+    background-color: var(--button-hover);
+}
+
+.btn-secondary:active {
+    background-color: var(--button);
+}
+
+.btn-attention {
+    background-color: var(--attention);
+}
+
+.btn-attention:hover {
+    background-color: var(--attention-hover);
+}
+
+.btn-attention:active {
+    background-color: var(--attention);
+}
+
+/*** Messages ********************************************************/
+
+.error-message {
+    color: var(--attention-text);
+}
+
+/*** Auth Page *******************************************************/
+
+#auth-page main {
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#auth-page .box-title {
+    text-align: center;
+    margin: 1rem 0 0.5rem 0;
+}
+
+#auth-page .login-button {
+    width: 100%;
+    margin: 1rem 0;
+}
+
+#auth-page .message {
+    margin: 1rem;
+    color: var(--dim-text);
+    font-style: italic;
+    text-align: center;
+}
+
+/*** Dashboard Page **************************************************/
+
+.dashboard {
+    background: var(--background);
+    margin: 1rem 0;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+}
+
+.server-list {
+    padding: 2rem;
+    background-color: var(--dark-background);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.placeholder {
+    color: var(--placeholder-color);
+    font-style: italic;
+}
+
+/* Media Queries
+@media (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+    }
+
+    .auth-box {
+        padding: 1.5rem;
+    }
+
+    .btn {
+        font-size: 0.9rem;
+    }
+} */
