@@ -15,6 +15,15 @@ volume_name = "slug-volume"      # Optional. Default: {server_slug}-volume
 
 apt_packages = []  # Optional. List of packages to be installed on the server. Example: ["nginx", "python3-pip"]
 
+# Settings for the server
+
+server_type = "ccx23"       # Optional. Default: ccx23
+server_image = "debian-13"  # Optional. Default: debian-13
+server_arguments = [        # Optional. List of additional arguments to be passed to the server creation command.
+    "-server",
+    "-Xms12G -Xmx12G",      # <- Adjust these if you change server_type
+]
+
 # List of ports to be opened on the server.
 # SSH (22/tcp) and ICMP are auto-generated for admin users — no need to list them here.
 

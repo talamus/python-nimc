@@ -80,8 +80,8 @@ It is expected to have the following structure:
 /persistent/     — Mounted volume
  │
  ├── bin/
- │   ├── server_start  — Scripts for server management
- │   ├── server_stop
+ │   ├── start_server  — Scripts for server management
+ │   ├── stop_server
  │   ├── check_inactivity
  │   │
  │   ├── hcloud  — Symlinks to executables
@@ -101,7 +101,12 @@ It is expected to have the following structure:
 
 ## Locations of Other Files on the Server
 
-`server_start`, `server_stop` and `check_inactivity` scripts
+`start_server` will read the following file if it exists:
+```
+/etc/nimc/server.arguments  — Optional arguments for server executable
+```
+
+`start_server`, `stop_server` and `check_inactivity` scripts
 are maintaining the following files:
 
 ```
@@ -113,6 +118,6 @@ are maintaining the following files:
 Logs will be written into:
 
 ```
-/tmp/nimc_inactivity.log  — Written by `check_inactivity` run by service user cronjob
+/tmp/nimc_inactivity.log    — Written by `check_inactivity` run by service user cronjob
 /var/log/self_destruct.log  — Written by `self_desctuct` run by root user cronjob
 ```

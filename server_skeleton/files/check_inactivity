@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")"
+set -e
+
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+SERVER_INACTIVE_FILE="/run/minecraft/hasturian.inactive"
+
+# Print timestamp
+printf '[%(%Y-%m-%dT%H:%M:%S%z)T] ' -1
+
+# Make sure that `rcon` is installed
+rcon -v >/dev/null
+
+# Read RCON configuration from `server.properties`
+if [ ! -f "server.properties" ]; then
+  echo "server.properties not found in $(pwd). Aborting."
+  exit 1
+fi
+
+RCON_PORT="$(grep '^rcon.port=' server.properties | cut -d'=' -f2)"
+RCON_PASSWORD="$(grep '^rcon.password=' server.properties | cut -d'=' -f2)"
+
+# Get the list of players
+PLAYER_LIST=$(rcon -a "localhost:$RCON_PORT" -p "$RCON_PASSWORD" list)
+
+# Get the number of current players
+if [[ $PLAYER_LIST =~ There\ are\ ([0-9]+)\ of ]]; then
+    PLAYER_COUNT="${BASH_REMATCH[1]}"
+    echo "Player count: $PLAYER_COUNT"
+
+    # Handle server inactive file based on player count
+    if [[ $PLAYER_COUNT -eq 0 ]]; then
+        # No players online - create inactive file if it doesn't exist
+        if [[ ! -f "$SERVER_INACTIVE_FILE" ]]; then
+            echo "No players online. Creating inactive timestamp file."
+            mkdir -p "$(dirname "$SERVER_INACTIVE_FILE")"
+            date +%s > "$SERVER_INACTIVE_FILE"
+        else
+            echo "Server already marked as inactive."
+        fi
+    else
+        # Players are online - remove inactive file if it exists
+        if [[ -f "$SERVER_INACTIVE_FILE" ]]; then
+            echo "Players online. Removing inactive timestamp file."
+            rm "$SERVER_INACTIVE_FILE"
+        fi
+    fi
+else
+    echo "Unable to determine the number of players. Aborting."
+    exit 1
+fi

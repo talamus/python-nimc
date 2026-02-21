@@ -28,6 +28,14 @@ write_files:
     permissions: '0755'
     content: {{ files_self_destruct }}
 
+  - path: /etc/nimc/server.arguments
+    owner: {{ service_username }}:{{ service_username }}
+    permissions: '0644'
+    content: |
+      {% for arg in server_arguments %}
+      {{ arg }}
+      {% endfor %}
+
 ssh_pwauth: false
 
 package_update: true
@@ -59,7 +67,7 @@ runcmd:
   # Set up cron job to check server inactivity every 15 minutes (nimc user)
   - echo "*/15 * * * * /persistence/bin/check_inactivity >> /tmp/nimc_inactivity.log 2>&1" | crontab -u {{ service_username }} -
 
-  # Set up cron job for self-destruct (root user) approx 5 minutes after
+  # Set up cron job for self-destruct approx 5 minutes after (root user)
   - echo "20,35,50,5 * * * * /root/bin/self_destruct >> /var/log/self_destruct.log 2>&1" | crontab -u root -
 
   # Configure iptables firewall
