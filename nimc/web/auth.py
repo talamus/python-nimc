@@ -76,14 +76,11 @@ async def get_current_user(
     authorization: Optional[str] = Header(None),
     access_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
-) -> User:
-    """Dependency to get the current authenticated user from JWT token (header or cookie)"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Not authenticated",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+) -> Optional[User]:
+    """Dependency to get the current authenticated user from JWT token (header or cookie).
 
+    Returns None if the user is not authenticated.
+    """
     token = None
 
     # Try to get token from Authorization header first
@@ -94,15 +91,28 @@ async def get_current_user(
         token = access_token
 
     if not token:
-        raise credentials_exception
+        return None
 
-    payload = verify_token(token)
+    try:
+        payload = verify_token(token)
+    except HTTPException:
+        return None
+
     user_id: str = payload.get("sub")
     if user_id is None:
-        raise credentials_exception
+        return None
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if user is None:
-        raise credentials_exception
+    return db.query(User).filter(User.id == int(user_id)).first()
 
-    return user
+
+async def get_current_user_or_fail(
+    current_user: Optional[User] = Depends(get_current_user),
+) -> User:
+    """Like get_current_user, but raises 401 if not authenticated."""
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return current_user

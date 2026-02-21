@@ -1,8 +1,8 @@
 from hcloud import Client
 from hcloud.firewalls.domain import Firewall, FirewallRule
 
-from core.exceptions import MissingResource
-from core.server import FixedSource, ServerConfig
+from .exceptions import MissingResource
+from .server import FixedSource, ServerConfig
 
 
 def build_rules_for_source(

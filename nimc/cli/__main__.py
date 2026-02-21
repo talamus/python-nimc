@@ -1,7 +1,7 @@
 """This is just test code. It will be removed in the future."""
 
 from .settings import settings
-from core.server import Server
+from nimc.core.server import Server
 
 if __name__ == "__main__":
     print(">>>", settings.model_dump())

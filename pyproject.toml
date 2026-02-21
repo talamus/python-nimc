@@ -32,7 +32,7 @@ cli = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nimc/core", "nimc/web", "nimc/cli"]
+packages = ["nimc"]
 
 [dependency-groups]
 dev = [

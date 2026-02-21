@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import AliasChoices, Secret, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from core.server import FixedSource
+from nimc.core.server import FixedSource
 
 
 class Settings(BaseSettings):

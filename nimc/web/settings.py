@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import AliasChoices, Field, Secret, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from core.server import FixedSource
+from nimc.core.server import FixedSource
 
 # Project root directory (parent of nimc/)
 ROOT_PATH = Path(__file__).parent.parent.parent

@@ -1,5 +1,5 @@
-from nimc.firewall import build_rules_for_source
-from nimc.server import ServerConfig
+from nimc.core.firewall import build_rules_for_source
+from nimc.core.server import ServerConfig
 
 
 def _make_config(**overrides) -> ServerConfig:

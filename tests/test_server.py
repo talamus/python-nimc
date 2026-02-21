@@ -4,7 +4,7 @@ import jinja2
 import pytest
 from pydantic import ValidationError
 
-from nimc.server import Server, ServerConfig, _load_files, _yaml_block_scalar
+from nimc.core.server import Server, ServerConfig, _load_files, _yaml_block_scalar
 
 MINIMAL_TOML = """\
 server_title = "Test Server"

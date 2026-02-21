@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -18,22 +20,18 @@ def set_templates(jinja2_templates: Jinja2Templates):
 
 
 @router.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    """Home page - redirects to login or dashboard"""
-    # Check if user has token in cookie/header, redirect accordingly
-    # For now, just redirect to login
-    return RedirectResponse(url="/login", status_code=302)
+async def home(
+    request: Request, current_user: Optional[User] = Depends(get_current_user)
+):
+    """Home page - shows dashboard if authenticated, otherwise redirects to login"""
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse(
+        "dashboard.html", {"request": request, "user": current_user}
+    )
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """Login page"""
     return templates.TemplateResponse("login.html", {"request": request})
-
-
-@router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, current_user: User = Depends(get_current_user)):
-    """Dashboard page - requires authentication"""
-    return templates.TemplateResponse(
-        "dashboard.html", {"request": request, "user": current_user}
-    )

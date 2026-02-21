@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..auth import authenticate_user, create_access_token, get_current_user
+from ..auth import authenticate_user, create_access_token, get_current_user_or_fail
 from ..settings import settings
 from ..database import User, get_db
 from .util import success, error
@@ -53,14 +53,14 @@ async def login(
         samesite="lax",
         secure=settings.secure_cookies,
     )
-    response.headers["HX-Redirect"] = "/dashboard"
+    response.headers["HX-Redirect"] = "/"
 
     logger.info(f"Login: {user.username} from {user.last_logged_from}")
     return response
 
 
 @router.post("/logout", response_class=HTMLResponse)
-async def logout(current_user: User = Depends(get_current_user)):
+async def logout(current_user: User = Depends(get_current_user_or_fail)):
     """Logout endpoint - clears authentication cookie and redirects to login"""
     response = success("Logout successful")
     response.delete_cookie(

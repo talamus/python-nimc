@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class Port(BaseModel):
+    """A TCP or UDP port to open on the server, optionally admin-only."""
+
     description: str
     protocol: Literal["tcp", "udp"]
     port: int = Field(ge=1, le=65535)

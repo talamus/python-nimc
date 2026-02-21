@@ -19,5 +19,6 @@
 * `nimc/core/` — Core functionality (hcloud integration, server models)
 * `nimc/web/` — FastAPI web UI
 * `nimc/cli/` — CLI interface
-* `servers/` — server config directories (each has `server.toml`, `cloud-config.yaml`, `files/`)
+* `servers/` — Server config directories (each has `server.toml`, `cloud-config.yaml`, `files/`)
+* `server_skeleton/` — A skeleton for a server config directory. If server is missing a file, it will be fetched from here.
 * `tests/` — pytest tests (`test_*.py`)

@@ -1,8 +1,8 @@
 """Gunicorn configuration for production deployment."""
 
 import multiprocessing
-from web.logging import LOG_CONFIG
-from web.settings import settings
+from nimc.web.logging import LOG_CONFIG
+from nimc.web.settings import settings
 
 bind = f"{settings.host}:{settings.port}"
 workers = multiprocessing.cpu_count() * 2 + 1
