@@ -34,6 +34,9 @@ class ServerConfig(BaseModel):
     primary_ip_name: str | None = None
     firewall_name: str | None = None
     volume_name: str | None = None
+    server_type: str = "ccx23"
+    server_image: str = "debian-13"
+    server_arguments: list[str] = ["-server", "-Xms12G", "-Xmx12G"]
     apt_packages: list[str] = []
     ports: list[Port] = []
 
